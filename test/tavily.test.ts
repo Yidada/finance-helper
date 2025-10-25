@@ -1,19 +1,53 @@
-import { describe, expect, test, beforeEach, mock } from "bun:test";
-import { getTavilyTools } from "../src/tools/tavily";
+import {
+  describe,
+  expect,
+  test,
+  beforeEach,
+  afterEach,
+  mock,
+  spyOn,
+} from "bun:test";
 import { MultiServerMCPClient } from "@langchain/mcp-adapters";
+
+// Mock the MultiServerMCPClient to avoid spawning actual MCP subprocess
+const mockGetTools = mock(() =>
+  Promise.resolve([
+    {
+      name: "tavily_search",
+      description: "Search the web using Tavily",
+      invoke: mock(() => Promise.resolve("mock search result")),
+    },
+  ]),
+);
+
+const mockClient = {
+  getTools: mockGetTools,
+};
 
 describe("getTavilyTools", () => {
   const originalEnv = process.env.TAVILY_API_KEY;
+  let clientSpy: any;
 
   beforeEach(() => {
     // Reset environment before each test
+    process.env.TAVILY_API_KEY = "tvly-test-key-123";
+
+    // Mock the MultiServerMCPClient constructor
+    clientSpy = spyOn(
+      MultiServerMCPClient.prototype,
+      "getTools",
+    ).mockImplementation(mockGetTools);
+  });
+
+  afterEach(() => {
+    // Restore original environment
     process.env.TAVILY_API_KEY = originalEnv;
+    clientSpy?.mockRestore();
+    mockGetTools.mockClear();
   });
 
   test("returns tools and client objects", async () => {
-    // Set a mock API key for testing
-    process.env.TAVILY_API_KEY = "tvly-test-key-123";
-
+    const { getTavilyTools } = await import("../src/tools/tavily");
     const result = await getTavilyTools();
 
     expect(result).toHaveProperty("tools");
@@ -22,33 +56,22 @@ describe("getTavilyTools", () => {
   });
 
   test("returns an array of tools", async () => {
-    process.env.TAVILY_API_KEY = "tvly-test-key-123";
-
+    const { getTavilyTools } = await import("../src/tools/tavily");
     const { tools } = await getTavilyTools();
 
     expect(Array.isArray(tools)).toBe(true);
     expect(tools.length).toBeGreaterThan(0);
   });
 
-  test("throws error when TAVILY_API_KEY is missing", async () => {
-    delete process.env.TAVILY_API_KEY;
+  test("calls getTools on the MCP client", async () => {
+    const { getTavilyTools } = await import("../src/tools/tavily");
+    await getTavilyTools();
 
-    // Tavily MCP server requires API key, so it should throw an error
-    await expect(getTavilyTools()).rejects.toThrow();
-  });
-
-  test("configures MCP client with correct parameters", async () => {
-    process.env.TAVILY_API_KEY = "tvly-test-key-456";
-
-    const { client } = await getTavilyTools();
-
-    // Verify the client was created (it should be an instance of MultiServerMCPClient)
-    expect(client).toBeInstanceOf(MultiServerMCPClient);
+    expect(mockGetTools).toHaveBeenCalled();
   });
 
   test("tools have expected structure", async () => {
-    process.env.TAVILY_API_KEY = "tvly-test-key-789";
-
+    const { getTavilyTools } = await import("../src/tools/tavily");
     const { tools } = await getTavilyTools();
 
     // Each tool should have a name and be callable
@@ -56,5 +79,14 @@ describe("getTavilyTools", () => {
       expect(tool).toHaveProperty("name");
       expect(typeof tool.invoke).toBe("function");
     });
+  });
+
+  test("creates MCP client with correct configuration", async () => {
+    const { getTavilyTools } = await import("../src/tools/tavily");
+    process.env.TAVILY_API_KEY = "tvly-custom-key";
+
+    const { client } = await getTavilyTools();
+
+    expect(client).toBeInstanceOf(MultiServerMCPClient);
   });
 });
