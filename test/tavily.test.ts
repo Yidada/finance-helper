@@ -8,21 +8,25 @@ import {
   spyOn,
 } from "bun:test";
 import { MultiServerMCPClient } from "@langchain/mcp-adapters";
+import { DynamicStructuredTool } from "@langchain/core/tools";
+import { z } from "zod";
 
 // Mock the MultiServerMCPClient to avoid spawning actual MCP subprocess
-const mockGetTools = mock(() =>
-  Promise.resolve([
-    {
-      name: "tavily_search",
-      description: "Search the web using Tavily",
-      invoke: mock(() => Promise.resolve("mock search result")),
+const mockGetTools = mock(async () => {
+  // Create a proper DynamicStructuredTool mock
+  const mockTool = new DynamicStructuredTool({
+    name: "tavily_search",
+    description: "Search the web using Tavily",
+    schema: z.object({
+      query: z.string().describe("The search query"),
+    }),
+    func: async ({ query }: { query: string }) => {
+      return "mock search result";
     },
-  ]),
-);
+  });
 
-const mockClient = {
-  getTools: mockGetTools,
-};
+  return [mockTool];
+});
 
 describe("getTavilyTools", () => {
   const originalEnv = process.env.TAVILY_API_KEY;
