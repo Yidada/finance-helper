@@ -3,128 +3,120 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ---
-description: LangChain agent demo using Bun runtime. Use Bun instead of Node.js, npm, pnpm, or vite.
+description: LangChain agent with MCP (Model Context Protocol) integration using Bun runtime
 globs: "*.ts, *.tsx, *.html, *.css, *.js, *.jsx, package.json"
 alwaysApply: false
 ---
 
+## CRITICAL RULES
+
+**NEVER AUTOMATICALLY COMMIT OR PUSH:**
+- ❌ NEVER run `git commit` without explicit user permission
+- ❌ NEVER run `git push` without explicit user permission
+- ❌ NEVER run `git add` and `git commit` in sequence without asking first
+- ✅ ALWAYS ask "Should I commit these changes?" before committing
+- ✅ ALWAYS ask "Should I push to remote?" before pushing
+- ✅ ALWAYS wait for explicit user confirmation
+
+This rule applies to ALL situations, even if the task seems complete or the user asks to "finish" something.
+
 ## Project Overview
 
-This is a LangChain agent demonstration that uses OpenRouter to access Claude Sonnet 4.5. The agent is configured with tools and can be invoked to perform tasks using AI-powered function calling.
+A LangChain agent demonstration using OpenRouter to access Claude Sonnet 4.5, with Model Context Protocol (MCP) integration for extended tool capabilities. The agent combines traditional LangChain tools with MCP servers (currently Tavily for web search).
 
 ## Runtime: Bun
 
-Default to using Bun instead of Node.js.
+**Always use Bun, never Node.js, npm, pnpm, or vite:**
 
-- Use `bun <file>` instead of `node <file>` or `ts-node <file>`
-- Use `bun test` instead of `jest` or `vitest`
-- Use `bun build <file.html|file.ts|file.css>` instead of `webpack` or `esbuild`
-- Use `bun install` instead of `npm install` or `yarn install` or `pnpm install`
-- Use `bun run <script>` instead of `npm run <script>` or `yarn run <script>` or `pnpm run <script>`
-- Bun automatically loads .env, so don't use dotenv.
+- `bun install` - Install dependencies
+- `bun test` - Run all tests
+- `bun test <file>` - Run specific test file
+- `bun run dev` - Run main agent (src/index.ts) with hot reload
+- `bun run example:search` - Run stock price search example
 
-## APIs
+Bun automatically loads `.env` files - no dotenv package needed.
 
-- `Bun.serve()` supports WebSockets, HTTPS, and routes. Don't use `express`.
-- `bun:sqlite` for SQLite. Don't use `better-sqlite3`.
-- `Bun.redis` for Redis. Don't use `ioredis`.
-- `Bun.sql` for Postgres. Don't use `pg` or `postgres.js`.
-- `WebSocket` is built-in. Don't use `ws`.
-- Prefer `Bun.file` over `node:fs`'s readFile/writeFile
-- Bun.$`ls` instead of execa.
+## Common Commands
 
-## Testing
+```bash
+# Development
+bun run dev                    # Run main agent with hot reload
+bun src/index.ts              # Run main agent once
+bun examples/search-stock-price.ts  # Run example script
 
-Use `bun test` to run tests.
+# Testing
+bun test                      # Run all tests
+bun test test/tavily.test.ts # Run specific test file
 
-```ts#index.test.ts
-import { test, expect } from "bun:test";
+# Dependencies
+bun install                   # Install packages
+bun add <package>            # Add new dependency
+```
 
-test("hello world", () => {
-  expect(1).toBe(1);
+## Architecture
+
+### Directory Structure
+
+```
+src/
+├── agent/        # Agent initialization and configuration
+├── provider/     # LLM provider setup (OpenRouter)
+├── tools/        # LangChain tools and MCP integrations
+└── knowledge/    # Prompts and message helpers
+
+examples/         # Example usage scripts
+test/            # Test files (using bun:test)
+```
+
+### Key Architectural Patterns
+
+**1. Agent Initialization (src/agent/index.ts)**
+
+The agent is created using top-level await to initialize MCP tools asynchronously:
+
+```typescript
+async function createAgentWithTools() {
+  const { tools: tavilyTools } = await getTavilyTools();
+  return createAgent({
+    model: model,
+    tools: [getWeather, ...tavilyTools],
+  });
+}
+
+export const agent = await createAgentWithTools();
+```
+
+**Important:** When importing the agent, files must support top-level await (ESM modules).
+
+**2. Tool Types**
+
+The project uses two types of tools:
+
+- **LangChain Tools** (src/tools/weather.ts): Defined with `tool()` helper, Zod schemas
+- **MCP Tools** (src/tools/tavily.ts): Retrieved from MCP servers via `@langchain/mcp-adapters`
+
+**3. MCP Integration**
+
+MCP tools are initialized via `MultiServerMCPClient` with stdio transport:
+
+```typescript
+const client = new MultiServerMCPClient({
+  tavily: {
+    transport: "stdio",
+    command: "npx",
+    args: ["-y", "tavily-mcp@0.1.3"],
+    env: { TAVILY_API_KEY: process.env.TAVILY_API_KEY },
+  },
 });
 ```
 
-## Frontend
+MCP servers run as subprocesses spawned by npx. The client fetches available tools dynamically via `client.getTools()`.
 
-Use HTML imports with `Bun.serve()`. Don't use `vite`. HTML imports fully support React, CSS, Tailwind.
+## Model Configuration
 
-Server:
+**OpenRouter via OpenAI-compatible Interface:**
 
-```ts#index.ts
-import index from "./index.html"
-
-Bun.serve({
-  routes: {
-    "/": index,
-    "/api/users/:id": {
-      GET: (req) => {
-        return new Response(JSON.stringify({ id: req.params.id }));
-      },
-    },
-  },
-  // optional websocket support
-  websocket: {
-    open: (ws) => {
-      ws.send("Hello, world!");
-    },
-    message: (ws, message) => {
-      ws.send(message);
-    },
-    close: (ws) => {
-      // handle close
-    }
-  },
-  development: {
-    hmr: true,
-    console: true,
-  }
-})
-```
-
-HTML files can import .tsx, .jsx or .js files directly and Bun's bundler will transpile & bundle automatically. `<link>` tags can point to stylesheets and Bun's CSS bundler will bundle.
-
-```html#index.html
-<html>
-  <body>
-    <h1>Hello, world!</h1>
-    <script type="module" src="./frontend.tsx"></script>
-  </body>
-</html>
-```
-
-With the following `frontend.tsx`:
-
-```tsx#frontend.tsx
-import React from "react";
-
-// import .css files directly and it works
-import './index.css';
-
-import { createRoot } from "react-dom/client";
-
-const root = createRoot(document.body);
-
-export default function Frontend() {
-  return <h1>Hello, world!</h1>;
-}
-
-root.render(<Frontend />);
-```
-
-Then, run index.ts
-
-```sh
-bun --hot ./index.ts
-```
-
-For more information, read the Bun API docs in `node_modules/bun-types/docs/**.md`.
-
-## LangChain Agent Architecture
-
-### Model Configuration
-
-This project uses **OpenRouter** as the LLM provider, configured through `@langchain/openai`'s `ChatOpenAI` class with a custom base URL:
+This project uses OpenRouter (not native LangChain provider) configured through `@langchain/openai`:
 
 ```typescript
 const model = new ChatOpenAI({
@@ -136,40 +128,60 @@ const model = new ChatOpenAI({
 });
 ```
 
-**Important Notes:**
-- OpenRouter is not a native LangChain provider, so it must be configured through the OpenAI-compatible interface
-- The API key must be passed as `apiKey` (not `openAIApiKey`)
-- The model name must be passed as `model` (not `modelName`)
-- Environment variable: `OPENROUTER_API_KEY` (required in global environment or `.env` file)
+**Critical Configuration Details:**
+- Use `apiKey` parameter (NOT `openAIApiKey`)
+- Use `model` parameter (NOT `modelName`)
+- Pass pre-configured model instance to `createAgent()` (not a model string)
+- Requires `OPENROUTER_API_KEY` environment variable
 
-### Agent Structure
+## Environment Variables
 
-The agent is created using LangChain's `createAgent()` function:
-- **Model**: Pass a pre-configured model instance (not a model string) when using OpenRouter
-- **Tools**: Defined using `tool()` helper with Zod schemas for validation
-- **Invocation**: Uses `.invoke()` with messages array containing role and content
-
-### Running the Agent
+Required in `.env` file or global environment:
 
 ```bash
-# Set environment variable (if not already in global env)
-export OPENROUTER_API_KEY=your-key-here
-
-# Run the agent
-bun run index.ts
+OPENROUTER_API_KEY=sk-or-...     # Required for LLM
+TAVILY_API_KEY=tvly-...          # Required for web search via Tavily MCP
 ```
 
-### Adding New Tools
+See `.env.example` for template.
 
-Tools are defined using the `tool()` helper from LangChain:
+## Testing
+
+**Use `bun:test` framework** (not jest, vitest, or other test runners):
+
+```typescript
+import { describe, expect, test } from "bun:test";
+```
+
+**Testing Strategy:**
+
+- **Unit tests with mocking** - Mock external dependencies (MCP clients, API calls) to avoid subprocess spawning
+- **Fast execution** - Tests should complete in <100ms
+- **Clean output** - No error messages from spawned processes
+
+**Example: Mocking MCP Client**
+
+```typescript
+import { mock, spyOn } from "bun:test";
+import { MultiServerMCPClient } from "@langchain/mcp-adapters";
+
+const mockGetTools = mock(() => Promise.resolve([/* mock tools */]));
+spyOn(MultiServerMCPClient.prototype, "getTools").mockImplementation(mockGetTools);
+```
+
+See `test/tavily.test.ts` for complete example of MCP mocking.
+
+## Adding New Tools
+
+### LangChain Tool
 
 ```typescript
 import { tool } from "langchain";
 import { z } from "zod";
 
-const myTool = tool(
-  (input) => {
-    // Tool implementation
+export const myTool = tool(
+  ({ param }) => {
+    // Implementation
     return result;
   },
   {
@@ -182,4 +194,41 @@ const myTool = tool(
 );
 ```
 
-Then add to the agent's `tools` array when creating the agent.
+Add to `src/agent/index.ts` tools array.
+
+### MCP Tool Integration
+
+1. Create new file in `src/tools/<name>.ts`
+2. Configure `MultiServerMCPClient` with appropriate transport
+3. Export async function that returns `{ tools, client }`
+4. Import and spread tools in `src/agent/index.ts`
+5. Add required environment variables to `.env.example`
+6. Create mocked tests to avoid subprocess spawning
+
+## Agent Invocation Pattern
+
+```typescript
+import { agent } from "./agent";
+import { createUserMessage } from "./knowledge/prompts";
+
+const result = await agent.invoke({
+  messages: [createUserMessage("Your query here")],
+});
+```
+
+Messages must have `role` ("user" | "system") and `content` properties.
+
+## Bun-Specific APIs
+
+When building features beyond LangChain:
+
+- `Bun.serve()` for HTTP servers (supports WebSockets, routes) - don't use Express
+- `bun:sqlite` for SQLite - don't use better-sqlite3
+- `Bun.file()` for file operations - prefer over node:fs
+- `Bun.$` for shell commands - instead of execa
+
+## Important Notes
+
+- Frontend support available via HTML imports with `Bun.serve()` if needed (see Bun docs)
+- MCP servers require Node.js v20+ for npx execution
+- Tool descriptions are critical - the LLM uses them to decide when to invoke tools
