@@ -24,6 +24,8 @@ This rule applies to ALL situations, even if the task seems complete or the user
 
 A LangChain agent demonstration using OpenRouter to access Claude Sonnet 4.5, with Model Context Protocol (MCP) integration for extended tool capabilities. The agent combines traditional LangChain tools with MCP servers (currently Tavily for web search).
 
+**Entry Point:** `src/index.ts` exports the configured agent and utilities. See `examples/` directory for usage patterns.
+
 ## Runtime: Bun
 
 **Always use Bun, never Node.js, npm, pnpm, or vite:**
@@ -39,10 +41,9 @@ Bun automatically loads `.env` files - no dotenv package needed.
 ## Common Commands
 
 ```bash
-# Development
-bun run dev                    # Run main agent with hot reload
-bun src/index.ts              # Run main agent once
-bun examples/search-stock-price.ts  # Run example script
+# Examples
+bun run example:weather       # Run weather query example
+bun run example:search        # Run stock price search example
 
 # Testing
 bun test                      # Run all tests

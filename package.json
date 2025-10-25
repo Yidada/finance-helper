@@ -12,7 +12,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "bun --hot src/index.ts",
+    "example:weather": "bun examples/weather-query.ts",
     "example:search": "bun examples/search-stock-price.ts"
   },
   "devDependencies": {

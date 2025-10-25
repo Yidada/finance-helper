@@ -1,27 +1,25 @@
 import { describe, expect, test } from "bun:test";
 import {
-  SYSTEM_PROMPTS,
-  USER_QUERIES,
   createSystemMessage,
   createUserMessage,
 } from "../src/knowledge/prompts";
 
 describe("prompt helpers", () => {
   test("createUserMessage produces a LangChain user payload", () => {
-    const message = createUserMessage(USER_QUERIES.weatherInTokyo);
+    const message = createUserMessage("Test user query");
 
     expect(message).toEqual({
       role: "user",
-      content: "What's the weather in Tokyo?",
+      content: "Test user query",
     });
   });
 
   test("createSystemMessage uses the system role", () => {
-    const message = createSystemMessage(SYSTEM_PROMPTS.weather);
+    const message = createSystemMessage("Test system prompt");
 
     expect(message).toEqual({
       role: "system",
-      content: SYSTEM_PROMPTS.weather,
+      content: "Test system prompt",
     });
   });
 });

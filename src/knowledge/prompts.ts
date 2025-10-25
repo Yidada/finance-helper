@@ -1,17 +1,15 @@
 /**
- * System prompts and instructions for the agent
+ * Message utilities for LangChain agent invocation
  */
 
-export const SYSTEM_PROMPTS = {
-  weather:
-    "You are a helpful weather assistant. Provide weather information when asked.",
-  default: "You are a helpful AI assistant.",
-};
-
-export const USER_QUERIES = {
-  weatherInTokyo: "What's the weather in Tokyo?",
-  qqqStockPrice: "What is the latest QQQ stock price?",
-};
+/**
+ * Default system prompt for the agent
+ */
+export const DEFAULT_SYSTEM_PROMPT =
+  "You are a helpful AI assistant with access to various tools. " +
+  "Use the available tools to help answer questions and complete tasks accurately. " +
+  "When searching for information, use the search tool. " +
+  "When asked about weather, use the weather tool.";
 
 /**
  * Create a user message in the format expected by LangChain

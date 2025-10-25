@@ -1,5 +1,5 @@
 import { agent } from "../src/agent";
-import { createUserMessage, USER_QUERIES } from "../src/knowledge/prompts";
+import { createUserMessage } from "../src/knowledge/prompts";
 
 /**
  * Example: Search for the latest QQQ stock price using Tavily MCP
@@ -12,10 +12,12 @@ import { createUserMessage, USER_QUERIES } from "../src/knowledge/prompts";
  * - OPENROUTER_API_KEY environment variable must be set
  */
 
+const QUERY = "What is the latest QQQ stock price?";
+
 console.log("🔍 Searching for latest QQQ stock price...\n");
 
 const result = await agent.invoke({
-  messages: [createUserMessage(USER_QUERIES.qqqStockPrice)],
+  messages: [createUserMessage(QUERY)],
 });
 
 console.log("📊 Result:\n");
