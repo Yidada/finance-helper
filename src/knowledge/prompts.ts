@@ -3,12 +3,14 @@
  */
 
 export const SYSTEM_PROMPTS = {
-  weather: "You are a helpful weather assistant. Provide weather information when asked.",
+  weather:
+    "You are a helpful weather assistant. Provide weather information when asked.",
   default: "You are a helpful AI assistant.",
 };
 
 export const USER_QUERIES = {
   weatherInTokyo: "What's the weather in Tokyo?",
+  qqqStockPrice: "What is the latest QQQ stock price?",
 };
 
 /**

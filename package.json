@@ -12,7 +12,8 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "bun --hot src/index.ts"
+    "dev": "bun --hot src/index.ts",
+    "example:search": "bun examples/search-stock-price.ts"
   },
   "devDependencies": {
     "@types/bun": "latest"
