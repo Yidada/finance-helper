@@ -1,0 +1,9 @@
+# macOS metadata
+.DS_Store
+
+# Dependencies and build artefacts
+node_modules/
+bun.lockb
+
+# Environment variables
+.env
