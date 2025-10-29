@@ -7,3 +7,5 @@ bun.lockb
 
 # Environment variables
 .env
+
+output/

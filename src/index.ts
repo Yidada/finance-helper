@@ -17,3 +17,5 @@ export {
 export { model } from "./provider/openrouter";
 export { getWeather } from "./tools/weather";
 export { getTavilyTools } from "./tools/tavily";
+export { getSequentialThinkingTools } from "./tools/sequential-thinking";
+export { getFilesystemTools } from "./tools/filesystem";

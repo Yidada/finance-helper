@@ -20,9 +20,15 @@ alwaysApply: false
 
 This rule applies to ALL situations, even if the task seems complete or the user asks to "finish" something.
 
+**NEVER USE ABSOLUTE STATIC PATHS:**
+- ❌ NEVER hardcode absolute paths like `/Users/username/project`
+- ❌ NEVER use static paths that are machine-specific
+- ✅ ALWAYS use dynamic path resolution: `cwd()`, `__dirname`, `import.meta.url`
+- ✅ ALWAYS ensure code works across different machines and environments
+
 ## Project Overview
 
-A LangChain agent demonstration using OpenRouter to access Claude Sonnet 4.5, with Model Context Protocol (MCP) integration for extended tool capabilities. The agent combines traditional LangChain tools with MCP servers (currently Tavily for web search).
+A LangChain agent demonstration using OpenRouter to access Claude Haiku 4.5, with Model Context Protocol (MCP) integration for extended tool capabilities. The agent combines traditional LangChain tools with MCP servers (Tavily for web search, Sequential Thinking for step-by-step reasoning, and Filesystem for file operations).
 
 **Entry Point:** `src/index.ts` exports the configured agent and utilities. Use `bun run cli` for interactive chat.
 
@@ -76,23 +82,30 @@ The agent is created using top-level await to initialize MCP tools asynchronousl
 ```typescript
 async function createAgentWithTools() {
   const { tools: tavilyTools } = await getTavilyTools();
+  const { tools: sequentialThinkingTools } = await getSequentialThinkingTools();
+  const { tools: filesystemTools } = await getFilesystemTools();
   return createAgent({
+    systemPrompt: DEFAULT_SYSTEM_PROMPT,
     model: model,
-    tools: [getWeather, ...tavilyTools],
+    tools: [getWeather, ...tavilyTools, ...sequentialThinkingTools, ...filesystemTools],
+    store: new InMemoryStore(),
   });
 }
 
 export const agent = await createAgentWithTools();
 ```
 
-**Important:** When importing the agent, files must support top-level await (ESM modules).
+**Important:** 
+- When importing the agent, files must support top-level await (ESM modules)
+- The agent includes `InMemoryStore()` for short-term conversation memory
+- System prompt is configured via `DEFAULT_SYSTEM_PROMPT` from `src/knowledge/prompts.ts`
 
 **2. Tool Types**
 
 The project uses two types of tools:
 
 - **LangChain Tools** (src/tools/weather.ts): Defined with `tool()` helper, Zod schemas
-- **MCP Tools** (src/tools/tavily.ts): Retrieved from MCP servers via `@langchain/mcp-adapters`
+- **MCP Tools** (src/tools/tavily.ts, src/tools/sequential-thinking.ts, src/tools/filesystem.ts): Retrieved from MCP servers via `@langchain/mcp-adapters`
 
 **3. MCP Integration**
 
@@ -111,6 +124,22 @@ const client = new MultiServerMCPClient({
 
 MCP servers run as subprocesses spawned by npx. The client fetches available tools dynamically via `client.getTools()`.
 
+**Current MCP Integrations:**
+- **Tavily** (web search): `tavily-mcp@0.1.3`
+- **Sequential Thinking** (step-by-step reasoning): `@modelcontextprotocol/server-sequential-thinking`
+- **Filesystem** (file operations): `@modelcontextprotocol/server-filesystem`
+  - Provides: read_text_file, read_media_file, read_multiple_files, write_file, edit_file, create_directory, list_directory, move_file, search_files, directory_tree, get_file_info
+  - Allowed directories configured in `src/tools/filesystem.ts` (currently: project root)
+
+**4. CLI Interface (src/cli/index.tsx)**
+
+Interactive chat interface built with Ink (React for CLIs):
+- Maintains conversation history in component state
+- Sends full message history with each agent invocation for context
+- Supports `exit`, `quit` commands and Ctrl+C to exit
+- Visual loading indicators during agent processing
+- All messages rendered with role-based color coding
+
 ## Model Configuration
 
 **OpenRouter via OpenAI-compatible Interface:**
@@ -119,7 +148,7 @@ This project uses OpenRouter (not native LangChain provider) configured through 
 
 ```typescript
 const model = new ChatOpenAI({
-  model: "anthropic/claude-sonnet-4.5",
+  model: "anthropic/claude-haiku-4.5",
   apiKey: process.env.OPENROUTER_API_KEY,
   configuration: {
     baseURL: "https://openrouter.ai/api/v1",
@@ -130,6 +159,7 @@ const model = new ChatOpenAI({
 **Critical Configuration Details:**
 - Use `apiKey` parameter (NOT `openAIApiKey`)
 - Use `model` parameter (NOT `modelName`)
+- Current model is `anthropic/claude-haiku-4.5` (can be changed to other OpenRouter models)
 - Pass pre-configured model instance to `createAgent()` (not a model string)
 - Requires `OPENROUTER_API_KEY` environment variable
 
@@ -140,6 +170,7 @@ Required in `.env` file or global environment:
 ```bash
 OPENROUTER_API_KEY=sk-or-...     # Required for LLM
 TAVILY_API_KEY=tvly-...          # Required for web search via Tavily MCP
+DISABLE_THOUGHT_LOGGING=false    # Optional: set to "true" to suppress Sequential Thinking logs
 ```
 
 See `.env.example` for template.
@@ -217,6 +248,9 @@ const result = await agent.invoke({
 
 Messages must have `role` ("user" | "system") and `content` properties.
 
+**Conversation Memory:**
+The agent uses `InMemoryStore()` for short-term memory. To maintain context across multiple invocations, pass the full message history with each call (as done in `src/cli/index.tsx`).
+
 ## Bun-Specific APIs
 
 When building features beyond LangChain:
@@ -231,3 +265,4 @@ When building features beyond LangChain:
 - Frontend support available via HTML imports with `Bun.serve()` if needed (see Bun docs)
 - MCP servers require Node.js v20+ for npx execution
 - Tool descriptions are critical - the LLM uses them to decide when to invoke tools
+- The CLI maintains conversation history to provide context to the agent across multiple turns
