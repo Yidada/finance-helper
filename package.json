@@ -6,6 +6,7 @@
     "@langchain/openai": "^1.0.0",
     "@types/yargs": "^17.0.34",
     "ink": "^6.4.0",
+    "ink-text-input": "^6.0.0",
     "langchain": "^1.0.1",
     "react": "^19.2.0",
     "yargs": "^18.0.0",
@@ -17,7 +18,9 @@
   "private": true,
   "scripts": {
     "example:weather": "bun examples/weather-query.ts",
-    "example:search": "bun examples/search-stock-price.ts"
+    "example:search": "bun examples/search-stock-price.ts",
+    "example:chat": "bun examples/interactive-chat.ts",
+    "cli": "bun src/cli/index.tsx"
   },
   "devDependencies": {
     "@types/bun": "latest"
