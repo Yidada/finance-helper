@@ -5,7 +5,7 @@
  *   import { agent } from "./src/index";
  *   const result = await agent.invoke({ messages: [...] });
  *
- * See examples/ directory for usage examples
+ * To start interactive chat, run: bun run cli
  */
 
 export { agent } from "./agent";

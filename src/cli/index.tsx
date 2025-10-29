@@ -43,9 +43,15 @@ const InteractiveChat = () => {
     setIsLoading(true);
 
     try {
-      // Invoke the agent
+      // Invoke the agent with full conversation history
       const result = await agent.invoke({
-        messages: [createUserMessage(userInput)],
+        messages: [
+          ...messages.map((msg) => ({
+            role: msg.role,
+            content: msg.content,
+          })),
+          createUserMessage(userInput),
+        ],
       });
 
       // Extract the response content

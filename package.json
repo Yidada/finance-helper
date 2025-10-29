@@ -17,9 +17,6 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "example:weather": "bun examples/weather-query.ts",
-    "example:search": "bun examples/search-stock-price.ts",
-    "example:chat": "bun examples/interactive-chat.ts",
     "cli": "bun src/cli/index.tsx"
   },
   "devDependencies": {

@@ -24,7 +24,7 @@ This rule applies to ALL situations, even if the task seems complete or the user
 
 A LangChain agent demonstration using OpenRouter to access Claude Sonnet 4.5, with Model Context Protocol (MCP) integration for extended tool capabilities. The agent combines traditional LangChain tools with MCP servers (currently Tavily for web search).
 
-**Entry Point:** `src/index.ts` exports the configured agent and utilities. See `examples/` directory for usage patterns.
+**Entry Point:** `src/index.ts` exports the configured agent and utilities. Use `bun run cli` for interactive chat.
 
 ## Runtime: Bun
 
@@ -33,25 +33,23 @@ A LangChain agent demonstration using OpenRouter to access Claude Sonnet 4.5, wi
 - `bun install` - Install dependencies
 - `bun test` - Run all tests
 - `bun test <file>` - Run specific test file
-- `bun run dev` - Run main agent (src/index.ts) with hot reload
-- `bun run example:search` - Run stock price search example
+- `bun run cli` - Start interactive chat with the agent
 
 Bun automatically loads `.env` files - no dotenv package needed.
 
 ## Common Commands
 
 ```bash
-# Examples
-bun run example:weather       # Run weather query example
-bun run example:search        # Run stock price search example
+# Interactive Chat
+bun run cli                   # Start the interactive chat interface
 
 # Testing
 bun test                      # Run all tests
-bun test test/tavily.test.ts # Run specific test file
+bun test test/tavily.test.ts  # Run specific test file
 
 # Dependencies
 bun install                   # Install packages
-bun add <package>            # Add new dependency
+bun add <package>             # Add new dependency
 ```
 
 ## Architecture
@@ -61,12 +59,12 @@ bun add <package>            # Add new dependency
 ```
 src/
 ├── agent/        # Agent initialization and configuration
+├── cli/          # Interactive chat interface (Ink-based)
 ├── provider/     # LLM provider setup (OpenRouter)
 ├── tools/        # LangChain tools and MCP integrations
 └── knowledge/    # Prompts and message helpers
 
-examples/         # Example usage scripts
-test/            # Test files (using bun:test)
+test/             # Test files (using bun:test)
 ```
 
 ### Key Architectural Patterns

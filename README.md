@@ -17,28 +17,14 @@ bun install
 Launch the interactive question-and-answer interface:
 
 ```bash
-bun run example:chat
-# or
 bun run cli
 ```
 
 Features:
 - Real-time conversation with the LangChain agent
-- Message history display
+- Short-term memory (remembers conversation history)
 - Access to web search (Tavily) and weather tools
 - Type `exit` or `quit` to exit, or press Ctrl+C
-
-### Example Scripts
-
-Run weather query example:
-```bash
-bun run example:weather
-```
-
-Run stock price search example:
-```bash
-bun run example:search
-```
 
 ## Environment Variables
 

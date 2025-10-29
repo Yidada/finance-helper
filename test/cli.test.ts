@@ -18,9 +18,9 @@ describe("CLI Interactive Chat", () => {
 
     // Check for key imports
     expect(content).toContain("import React");
-    expect(content).toContain("from \"ink\"");
-    expect(content).toContain("from \"ink-text-input\"");
-    expect(content).toContain("from \"../agent/index.js\"");
+    expect(content).toContain('from "ink"');
+    expect(content).toContain('from "ink-text-input"');
+    expect(content).toContain('from "../agent/index.js"');
 
     // Check for key functionality
     expect(content).toContain("InteractiveChat");
@@ -29,21 +29,9 @@ describe("CLI Interactive Chat", () => {
     expect(content).toContain("TextInput");
   });
 
-  test("Example file exists", async () => {
-    const examplePath = "./examples/interactive-chat.ts";
-    const file = Bun.file(examplePath);
-    const exists = await file.exists();
-    expect(exists).toBe(true);
-
-    const content = await file.text();
-    expect(content).toContain("import \"../src/cli/index.js\"");
-  });
-
-  test("package.json has CLI scripts", async () => {
+  test("package.json has CLI script", async () => {
     const packageJson = await Bun.file("./package.json").json();
-    expect(packageJson.scripts).toHaveProperty("example:chat");
     expect(packageJson.scripts).toHaveProperty("cli");
-    expect(packageJson.scripts["example:chat"]).toBe("bun examples/interactive-chat.ts");
     expect(packageJson.scripts["cli"]).toBe("bun src/cli/index.tsx");
   });
 

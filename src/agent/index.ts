@@ -1,4 +1,5 @@
 import { createAgent } from "langchain";
+import { InMemoryStore } from "@langchain/langgraph-checkpoint";
 import { model } from "../provider/openrouter";
 import { getWeather } from "../tools/weather";
 import { getTavilyTools } from "../tools/tavily";
@@ -19,6 +20,7 @@ async function createAgentWithTools() {
     systemPrompt: DEFAULT_SYSTEM_PROMPT,
     model: model,
     tools: [getWeather, ...tavilyTools, ...sequentialThinkingTools],
+    store: new InMemoryStore(),
   });
 }
 
