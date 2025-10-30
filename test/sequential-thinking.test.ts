@@ -55,6 +55,7 @@ const mockGetTools = mock(async () => {
 
 describe("getSequentialThinkingTools", () => {
   const originalEnv = process.env.DISABLE_THOUGHT_LOGGING;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let clientSpy: any;
 
   beforeEach(() => {

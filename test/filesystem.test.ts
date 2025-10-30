@@ -20,7 +20,7 @@ const mockGetTools = mock(async () => {
     schema: z.object({
       path: z.string().describe("The file path"),
     }),
-    func: async ({ path }: { path: string }) => {
+    func: async ({ path: _path }: { path: string }) => {
       return "mock file contents";
     },
   });
@@ -32,7 +32,13 @@ const mockGetTools = mock(async () => {
       path: z.string().describe("The file path"),
       content: z.string().describe("The content to write"),
     }),
-    func: async ({ path, content }: { path: string; content: string }) => {
+    func: async ({
+      path: _path,
+      content: _content,
+    }: {
+      path: string;
+      content: string;
+    }) => {
       return "mock write success";
     },
   });
@@ -41,6 +47,7 @@ const mockGetTools = mock(async () => {
 });
 
 describe("getFilesystemTools", () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let clientSpy: any;
 
   beforeEach(() => {

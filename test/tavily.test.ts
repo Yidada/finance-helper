@@ -20,7 +20,7 @@ const mockGetTools = mock(async () => {
     schema: z.object({
       query: z.string().describe("The search query"),
     }),
-    func: async ({ query }: { query: string }) => {
+    func: async ({ query: _query }: { query: string }) => {
       return "mock search result";
     },
   });
@@ -30,6 +30,7 @@ const mockGetTools = mock(async () => {
 
 describe("getTavilyTools", () => {
   const originalEnv = process.env.TAVILY_API_KEY;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let clientSpy: any;
 
   beforeEach(() => {

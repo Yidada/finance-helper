@@ -14,10 +14,10 @@ import { DEFAULT_SYSTEM_PROMPT } from "../knowledge/prompts";
  * - Filesystem: File and directory operations
  */
 async function createAgentWithTools() {
-  const { tools: tavilyTools, client: tavilyClient } = await getTavilyTools();
-  const { tools: sequentialThinkingTools, client: sequentialThinkingClient } =
+  const { tools: tavilyTools, client: _tavilyClient } = await getTavilyTools();
+  const { tools: sequentialThinkingTools, client: _sequentialThinkingClient } =
     await getSequentialThinkingTools();
-  const { tools: filesystemTools, client: filesystemClient } =
+  const { tools: filesystemTools, client: _filesystemClient } =
     await getFilesystemTools();
 
   return createAgent({
