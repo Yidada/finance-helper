@@ -17,10 +17,16 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "cli": "bun src/cli/index.tsx"
+    "cli": "bun src/cli/index.tsx",
+    "example": "bun examples/fixed-query.ts",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@typescript-eslint/eslint-plugin": "^8.46.2",
+    "@typescript-eslint/parser": "^8.46.2",
+    "eslint": "^9.38.0"
   },
   "peerDependencies": {
     "typescript": "^5"
