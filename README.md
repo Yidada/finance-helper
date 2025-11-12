@@ -1,6 +1,6 @@
 # Finance Helper
 
-An AI-powered investment assistant for Singapore-based investors, providing Dollar Cost Averaging (DCA) calculations, fee modeling, and return analysis for moomoo platform investments. Built with LangChain agent architecture using Claude Haiku 4.5 via OpenRouter, with Model Context Protocol (MCP) integration for extended capabilities.
+An AI-powered investment assistant for Singapore-based investors, providing Dollar Cost Averaging (DCA) calculations, fee modeling, and return analysis for moomoo platform investments. Built with LangChain agent architecture with flexible LLM provider support (OpenRouter, Moonshot AI/Kimi), Model Context Protocol (MCP) integration, and Kimi CLI integration for enhanced terminal operations.
 
 ## Features
 
@@ -8,10 +8,12 @@ An AI-powered investment assistant for Singapore-based investors, providing Doll
 - **Fee Modeling**: Accurate moomoo Singapore fee calculations including platform fees, commissions, GST (9%), and market-specific charges
 - **FX Spread Analysis**: Model currency conversion costs for USD/HKD assets
 - **Interactive CLI Chat**: Conversational interface for investment queries and calculations
+- **Multi-Provider LLM Support**: Choose between OpenRouter (Claude, GPT, etc.) or Moonshot AI (Kimi K2 models)
 - **Comprehensive Tooling**:
   - Web search via Tavily MCP for market data and research
   - Step-by-step reasoning via Sequential Thinking MCP for complex analysis
   - File operations via Filesystem MCP for data import/export
+  - Kimi CLI integration for complex terminal operations
   - Weather information lookup
 - **Conversation Memory**: Maintains context across multiple turns for complex investment discussions
 - **Export Capabilities**: Generate CSV/Excel reports and markdown summaries
@@ -47,6 +49,7 @@ bun run cli
   - **Web Search**: Research market data, ETF performance, and financial news
   - **Sequential Thinking**: Step-by-step reasoning for complex investment scenarios
   - **File Operations**: Import/export data, read CSV files, generate reports
+  - **Kimi CLI**: Delegate complex terminal operations to Kimi CLI agent
   - **Weather**: Get current weather information
 - Type `exit` or `quit` to exit, or press Ctrl+C
 
@@ -67,12 +70,16 @@ The tool currently supports analysis for the following instruments on moomoo Sin
 src/
 ├── agent/        # Agent initialization and configuration
 ├── cli/          # Interactive chat interface (Ink-based)
-├── provider/     # LLM provider setup (OpenRouter)
+├── provider/     # LLM provider setup (OpenRouter, Moonshot AI)
+│   ├── index.ts             # Provider selection logic
+│   ├── openrouter.ts        # OpenRouter configuration
+│   └── moonshot.ts          # Moonshot AI (Kimi) configuration
 ├── tools/        # LangChain tools and MCP integrations
 │   ├── tavily.ts            # Web search for market data
 │   ├── sequential-thinking.ts # Complex reasoning
 │   ├── filesystem.ts        # File operations
-│   └── weather.ts          # Weather information
+│   ├── kimi-cli.ts          # Kimi CLI integration for terminal operations
+│   └── weather.ts           # Weather information
 └── knowledge/    # Prompts and message helpers
 
 test/             # Test files (using bun:test)
@@ -84,9 +91,20 @@ doc/              # Project documentation including PRD
 Create a `.env` file with the following variables:
 
 ```bash
-OPENROUTER_API_KEY=sk-or-...     # Required for LLM
-TAVILY_API_KEY=tvly-...          # Required for web search
-DISABLE_THOUGHT_LOGGING=false    # Optional: set to "true" to suppress Sequential Thinking logs
+# Provider Selection (optional, defaults to "openrouter")
+PROVIDER=openrouter              # Options: "openrouter" | "moonshot"
+
+# OpenRouter API Key (required when PROVIDER=openrouter)
+OPENROUTER_API_KEY=sk-or-...
+
+# Moonshot AI API Key (required when PROVIDER=moonshot)
+# MOONSHOT_API_KEY=...
+
+# Tavily API Key (required for web search)
+TAVILY_API_KEY=tvly-...
+
+# Optional: Disable Sequential Thinking logs
+DISABLE_THOUGHT_LOGGING=false
 ```
 
 See `.env.example` for template.
@@ -94,7 +112,22 @@ See `.env.example` for template.
 ### Getting API Keys
 
 - **OpenRouter**: Get your API key from [https://openrouter.ai/keys](https://openrouter.ai/keys)
+- **Moonshot AI (Kimi)**: Get your API key from [https://platform.moonshot.ai/](https://platform.moonshot.ai/)
 - **Tavily**: Get your API key from [https://app.tavily.com/home](https://app.tavily.com/home)
+
+### Using Kimi CLI Tool
+
+The Kimi CLI tool allows the agent to perform complex terminal operations. To use it:
+
+```bash
+# Install Kimi CLI (requires uv package manager and Python 3.13)
+uv tool install --python 3.13 kimi-cli
+
+# Verify installation
+kimi --help
+```
+
+Once installed, the agent can automatically use Kimi CLI for terminal operations when needed.
 
 ## Testing
 
@@ -122,12 +155,31 @@ The agent uses the following MCP (Model Context Protocol) servers:
 
 MCP servers run as subprocesses and provide dynamic tool discovery to the agent.
 
+## Kimi CLI Integration
+
+The agent includes a dedicated tool for leveraging [Kimi CLI](https://github.com/MoonshotAI/kimi-cli), an AI-powered command-line agent by MoonshotAI. This integration allows the main agent to delegate complex terminal operations to Kimi's specialized CLI capabilities.
+
+**Features:**
+- Execute multi-step terminal operations
+- Context-aware command reasoning
+- Shell scripting assistance
+
+**Installation:**
+```bash
+uv tool install --python 3.13 kimi-cli
+```
+
+**Usage:** The agent automatically uses the Kimi CLI tool when appropriate for terminal operations.
+
 ## Technology Stack
 
 - **Runtime**: [Bun](https://bun.com) - Fast all-in-one JavaScript runtime
-- **LLM**: Claude Haiku 4.5 via OpenRouter
+- **LLM Providers**:
+  - OpenRouter (Claude Haiku 4.5, GPT models, etc.)
+  - Moonshot AI (Kimi K2 models)
 - **Framework**: LangChain with MCP adapters for tool integration
 - **CLI**: Ink (React for CLIs) for interactive interface
+- **Additional Tools**: Kimi CLI for enhanced terminal operations
 - **Testing**: bun:test framework
 - **Language**: TypeScript with strict type checking
 

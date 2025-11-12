@@ -28,7 +28,7 @@ This rule applies to ALL situations, even if the task seems complete or the user
 
 ## Project Overview
 
-A LangChain agent demonstration using OpenRouter to access Claude Haiku 4.5, with Model Context Protocol (MCP) integration for extended tool capabilities. The agent combines traditional LangChain tools with MCP servers (Tavily for web search, Sequential Thinking for step-by-step reasoning, and Filesystem for file operations).
+A LangChain agent demonstration with flexible LLM provider support (OpenRouter or Moonshot AI/Kimi), Model Context Protocol (MCP) integration, and Kimi CLI integration for enhanced terminal operations. The agent combines traditional LangChain tools with MCP servers (Tavily for web search, Sequential Thinking for step-by-step reasoning, and Filesystem for file operations), plus direct integration with Kimi CLI for complex terminal tasks.
 
 **Entry Point:** `src/index.ts` exports the configured agent and utilities. Use `bun run cli` for interactive chat.
 
@@ -66,8 +66,16 @@ bun add <package>             # Add new dependency
 src/
 ├── agent/        # Agent initialization and configuration
 ├── cli/          # Interactive chat interface (Ink-based)
-├── provider/     # LLM provider setup (OpenRouter)
+├── provider/     # LLM provider setup (OpenRouter, Moonshot AI)
+│   ├── index.ts             # Provider selection logic
+│   ├── openrouter.ts        # OpenRouter configuration
+│   └── moonshot.ts          # Moonshot AI (Kimi) configuration
 ├── tools/        # LangChain tools and MCP integrations
+│   ├── tavily.ts            # Web search via Tavily MCP
+│   ├── sequential-thinking.ts # Step-by-step reasoning MCP
+│   ├── filesystem.ts        # File operations MCP
+│   ├── kimi-cli.ts          # Kimi CLI integration
+│   └── weather.ts           # Weather tool (example)
 └── knowledge/    # Prompts and message helpers
 
 test/             # Test files (using bun:test)
@@ -87,7 +95,13 @@ async function createAgentWithTools() {
   return createAgent({
     systemPrompt: DEFAULT_SYSTEM_PROMPT,
     model: model,
-    tools: [getWeather, ...tavilyTools, ...sequentialThinkingTools, ...filesystemTools],
+    tools: [
+      getWeather,
+      kimiCli,
+      ...tavilyTools,
+      ...sequentialThinkingTools,
+      ...filesystemTools
+    ],
     store: new InMemoryStore(),
   });
 }
@@ -102,10 +116,11 @@ export const agent = await createAgentWithTools();
 
 **2. Tool Types**
 
-The project uses two types of tools:
+The project uses three types of tools:
 
-- **LangChain Tools** (src/tools/weather.ts): Defined with `tool()` helper, Zod schemas
+- **LangChain Tools** (src/tools/weather.ts, src/tools/kimi-cli.ts): Defined with `tool()` helper, Zod schemas
 - **MCP Tools** (src/tools/tavily.ts, src/tools/sequential-thinking.ts, src/tools/filesystem.ts): Retrieved from MCP servers via `@langchain/mcp-adapters`
+- **Kimi CLI Tool** (src/tools/kimi-cli.ts): Direct integration with Kimi CLI for complex terminal operations
 
 **3. MCP Integration**
 
@@ -142,9 +157,11 @@ Interactive chat interface built with Ink (React for CLIs):
 
 ## Model Configuration
 
-**OpenRouter via OpenAI-compatible Interface:**
+**Multi-Provider Support via OpenAI-compatible Interface:**
 
-This project uses OpenRouter (not native LangChain provider) configured through `@langchain/openai`:
+This project supports multiple LLM providers configured through `@langchain/openai`. The provider is selected via the `PROVIDER` environment variable (defaults to "openrouter").
+
+**Provider: OpenRouter (Default)**
 
 ```typescript
 const model = new ChatOpenAI({
@@ -156,24 +173,59 @@ const model = new ChatOpenAI({
 });
 ```
 
+**Provider: Moonshot AI (Kimi)**
+
+```typescript
+const model = new ChatOpenAI({
+  model: "moonshot-v1-8k",
+  apiKey: process.env.MOONSHOT_API_KEY,
+  configuration: {
+    baseURL: "https://api.moonshot.cn/v1",
+  },
+});
+```
+
 **Critical Configuration Details:**
 - Use `apiKey` parameter (NOT `openAIApiKey`)
 - Use `model` parameter (NOT `modelName`)
-- Current model is `anthropic/claude-haiku-4.5` (can be changed to other OpenRouter models)
+- Set `PROVIDER` environment variable to "openrouter" or "moonshot"
 - Pass pre-configured model instance to `createAgent()` (not a model string)
-- Requires `OPENROUTER_API_KEY` environment variable
+- Requires corresponding API key environment variable for selected provider
 
 ## Environment Variables
 
 Required in `.env` file or global environment:
 
 ```bash
-OPENROUTER_API_KEY=sk-or-...     # Required for LLM
+# Provider Selection (optional, defaults to "openrouter")
+PROVIDER=openrouter              # Options: "openrouter" | "moonshot"
+
+# LLM Provider API Keys (required based on PROVIDER)
+OPENROUTER_API_KEY=sk-or-...     # Required when PROVIDER=openrouter
+MOONSHOT_API_KEY=...             # Required when PROVIDER=moonshot
+
+# MCP Tools
 TAVILY_API_KEY=tvly-...          # Required for web search via Tavily MCP
-DISABLE_THOUGHT_LOGGING=false    # Optional: set to "true" to suppress Sequential Thinking logs
+
+# Optional Configuration
+DISABLE_THOUGHT_LOGGING=false    # Set to "true" to suppress Sequential Thinking logs
 ```
 
 See `.env.example` for template.
+
+### Kimi CLI Tool
+
+The Kimi CLI tool integration allows the agent to delegate complex terminal operations to Kimi CLI. To use this tool:
+
+```bash
+# Install Kimi CLI (requires uv and Python 3.13)
+uv tool install --python 3.13 kimi-cli
+
+# Verify installation
+kimi --help
+```
+
+The tool is automatically available to the agent once installed. No additional configuration required.
 
 ## Testing
 
